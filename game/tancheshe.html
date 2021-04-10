@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贪吃蛇</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        #canvas {
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            margin-bottom: 40px;
+        }
+        #control {
+            padding: 10px 30px;
+        }
+        #score {
+            font-size: 40px;
+            color: #ff0000;
+            width: 602px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <p id="score"></p>
+    <canvas id="canvas" width="600" height="600"></canvas>
+    <button id="control">开始游戏</button>
+
+    <script>
+        // canvas
+        var c,ctx
+        c = document.getElementById('canvas')
+        ctx = c.getContext('2d')
+        // 一块身体宽高
+        var block_w = 20
+        // 身体/食物 类
+        class Body {
+            constructor(x, y, color = "#ff0000") {
+                this.x = x
+                this.y = y
+                this.width = block_w
+                this.height = block_w
+                this.color = color
+            }
+            init(ctx) {
+                ctx.fillStyle = this.color
+                ctx.fillRect(this.x, this.y, this.width, this.height)
+            }
+            clear(ctx) {
+                ctx.clearRect(this.x, this.y, this.width, this.height)
+            }
+        }
+        // 身体/食物/积分
+        var bodys = [], food, score = 0
+        // 创建食物
+        function createFood() {
+            let w = c.width, h = c.height
+            let b_w = b_h = block_w
+            let x = Math.floor(Math.random() * (w / b_w)) * b_w,
+                y = Math.floor(Math.random() * (h / b_h)) * b_h
+            if(bodys.some(b => b.x === x && b.y === y)) {
+               return createFood()
+            } else {
+                return new Body(x, y, '#0000ff')
+            }
+        }
+        // 分数显示
+        function showScore() {
+            let scoreText = document.getElementById('score')
+            scoreText.innerHTML = `当前分数: ${score}`
+        }
+         // 游戏初始化
+         function gameInit() {
+            ctx.clearRect(0, 0, c.width, c.height)
+            bodys = []
+            let s = new Body(0,0)
+            s.init(ctx)
+            bodys.push(s)
+            
+            food = createFood()
+            food.init(ctx)
+            
+            this.showScore()
+        }
+        gameInit()
+        // 自动移动方向 和 移动速度
+        var prevKey = 39, moveSpeed = 100
+        // 自动移动
+        function autoMove(keyCode) {
+            // 可移动按键值 上/下/左/又
+            let moveKeys = [37,38,39,40]
+            if(moveKeys.indexOf(keyCode) === -1) return false
+            // 边界判断
+            let f = bodys[0]
+            if(f.x === 0 && keyCode === 37) {
+                gameEnd()
+                return false
+            }
+            if(f.x === c.width - block_w && keyCode === 39) {
+                gameEnd()
+                return false
+            }
+            if(f.y === 0 && keyCode === 38) {
+                gameEnd()
+                return false
+            }
+            if(f.y === c.height - block_w && keyCode === 40) {
+                gameEnd()
+                return false
+            }
+            // 移动距离
+            let m_x, m_y, _mx, _my
+            m_x = keyCode == 37 ? -1 : keyCode == 39 ? 1 : 0
+            m_y = keyCode == 38 ? -1 : keyCode == 40 ? 1 : 0
+            _mx = f.x + m_x * block_w
+            _my = f.y + m_y * block_w
+            // 身体触碰判断
+            if(bodys.some(b => b.x === _mx && b.y === _my)) {
+                gameEnd()
+                return false
+            }
+            // 身体移动
+            let m_f = new Body(_mx, _my, f.color)
+            m_f.init(ctx)
+            bodys.unshift(m_f)
+            // 吃到食物 / 没吃食物判断
+            if(_mx === food.x && _my === food.y) {
+                score += 1
+                food = createFood()
+                food.init(ctx)
+                showScore()
+            } else {
+                let d = bodys[bodys.length - 1]
+                d.clear(ctx)
+                bodys.pop()
+            }
+        }
+        // 自动移动定时器
+        var autoTimer = null
+        // 开始游戏
+        function gameStart(params) {
+            autoTimer = setInterval(() => {
+                // 检查长度提高速度
+                let maxLen = Math.pow(c.width / 2, 2)
+                moveSpeed *= (1 - bodys.length / maxLen)
+                autoMove(prevKey)
+            }, moveSpeed)
+        }
+        // 结束游戏
+        function gameEnd() {
+            clearInterval(autoTimer)
+            autoTimer = null
+            gameInit()
+            alert(`游戏结束,您当前的分数为: ${score}`)
+        }
+        // 按钮控制
+        var controlBtn
+        controlBtn = document.getElementById('control')
+        controlBtn.onclick = function() {
+            this.innerHTML = autoTimer ? '开始游戏' : '结束游戏'
+            autoTimer ? gameEnd() : gameStart()
+        }
+        // 按键移动
+        document.addEventListener('keydown', function({ keyCode }) {
+            // 判断游戏是否开始
+            if(!autoTimer) return false
+            // 不允许反向移动
+            let reviseM = new Map([
+                [37, 39],
+                [38, 40],
+                [39, 37],
+                [40, 38]
+            ])
+            if(reviseM.get(keyCode) === prevKey || keyCode === prevKey) return false
+            autoMove(keyCode)
+            prevKey = keyCode
+        })
+    </script>
+</body>
+</html>
