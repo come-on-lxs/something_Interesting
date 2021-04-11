@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>防抖</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+        #list {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            margin: 0;
+            width: 1200px;
+            margin: 0 auto;
+            background-color: #f0f2f7;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .item{
+            width: 285px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            background-color: #c1c1c1;
+            border-radius: 5px;
+            overflow: hidden;
+            height: 300px;
+        }
+        .item:nth-child(4n) {
+            margin-right: 0;
+        }
+    </style>
+</head>
+<body>
+    <ul id="list">
+        <li class="item"></li>
+        <li class="item"></li>
+        <li class="item"></li>
+        <li class="item"></li>
+        <li class="item"></li>
+        <li class="item"></li>
+        <li class="item"></li>
+        <li class="item"></li>
+        <li class="item"></li>
+        <li class="item"></li>
+        <li class="item"></li>
+        <li class="item"></li>
+    </ul>
+
+    <script>
+        function debounce(fn, wait, immediate) {
+            let timeout, context, args, callNow, result;
+            let debounced = function() {
+                context = this
+                args = arguments
+                if(timeout) clearTimeout(timeout)
+                if(immediate) {
+                    callNow = !timeout
+                    timeout = setTimeout(() => {
+                        timeout = null
+                    }, wait)
+                    if(callNow) {
+                        result = fn.apply(context, args)
+                    }
+                } else {
+                    timeout = setTimeout(() => {
+                        result = fn.apply(context, args)
+                    }, wait)
+                }
+                return result
+            }
+            debounced.cancel = function() {
+                clearTimeout(timeout)
+                timeout = null
+            }
+            return debounced
+        }
+
+        window.onscroll = debounce(scrollList, 300  )
+
+        function scrollList(e) {
+            let sy = window.scrollY
+            let wh = window.innerHeight
+            let lh = list.offsetHeight
+            let dis = 150
+            if(sy + wh + dis > lh) {
+                pushMoreList()
+            }
+        }
+
+        function pushMoreList() {
+            var list = document.getElementById('list')
+            let a = new Array(8).fill(`<li class="item"></li>`)
+            setTimeout(() => {
+                list.innerHTML += a.join(" ")
+            }, 150)
+        }
+    </script>
+</body>
+</html>
